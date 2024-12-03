@@ -37,7 +37,7 @@ namespace stbi {
 	bool ImgFileLoader::load(const char* Path, Load_Option Option)
 	{
 		if (buff_ != nullptr) stbi_image_free(buff_);
-		uint8_t* rbuff = stbi_load(Path, &wid_, &hgt_, &nch_, Option);
+		buff_ = stbi_load(Path, &wid_, &hgt_, &nch_, Option);
 		if (Option != 0) nch_ = Option;
 		return buff_ != nullptr;
 	}
