@@ -25,68 +25,36 @@
 namespace stbi {
 
 
-	class FormatStrategy {
-	private:
-		virtual void writeToThisFormat_(std::string Path_No_Suffix_, int Width_, int Height_, int Num_of_Channls_, const void* Data_) = 0;
-
-	public:
-		friend class ImageWriter;
-	};
+	namespace format {
 
 
-	class PngStrategy : public FormatStrategy {
-	private:
-		void writeToThisFormat_(std::string Path_No_Suffix_, int Width_, int Height_, int Num_of_Channls_, const void* Data_) override;
-	};
+		class PNG {
+		protected:
+			void writeToThisFormat_(std::string Path_No_Suffix_, int Width_, int Height_, int Num_of_Channls_, const void* Data_);
+		};
 
-	class BmpStrategy : public FormatStrategy {
-	private:
-		void writeToThisFormat_(std::string Path_No_Suffix_, int Width_, int Height_, int Num_of_Channls_, const void* Data_) override;
-	};
+		class BMP {
+		protected:
+			void writeToThisFormat_(std::string Path_No_Suffix_, int Width_, int Height_, int Num_of_Channls_, const void* Data_);
+		};
 
-	class TgaStrategy : public FormatStrategy {
-	private:
-		void writeToThisFormat_(std::string Path_No_Suffix_, int Width_, int Height_, int Num_of_Channls_, const void* Data_) override;
-	};
+		class TGA {
+		protected:
+			void writeToThisFormat_(std::string Path_No_Suffix_, int Width_, int Height_, int Num_of_Channls_, const void* Data_);
+		};
 
-	class JpgStrategy : public FormatStrategy {
-	private:
-		void writeToThisFormat_(std::string Path_No_Suffix_, int Width_, int Height_, int Num_of_Channls_, const void* Data_) override;
-	};
+		class JPG {
+		protected:
+			void writeToThisFormat_(std::string Path_No_Suffix_, int Width_, int Height_, int Num_of_Channls_, const void* Data_);
+		};
+
+	}//namespace format end
 
 
-
-
-
-	enum class FORMAT {
-		PNG, BMP, TGA, JPG
-	};
-
-	class ImageWriter
+	template<class FormatImpl>
+	class ImageWriter : private FormatImpl
 	{
-	private:
-		std::unique_ptr<FormatStrategy> format_;
-
 	public:
-		ImageWriter(FORMAT Dest_Format_)
-			:format_()
-		{
-			switch (Dest_Format_)
-			{
-			case FORMAT::PNG:
-				format_ = std::make_unique<PngStrategy>();
-				break;
-			case FORMAT::BMP:
-				format_ = std::make_unique<BmpStrategy>();
-				break;
-			case FORMAT::TGA:
-				format_ = std::make_unique<TgaStrategy>();
-				break;
-			case FORMAT::JPG:
-				format_ = std::make_unique<JpgStrategy>();
-				break;
-			}
-		}
 
 		template<class InIt>
 		void writeInto(std::string Path_No_Suffix_, InIt Src_, size_t Width_, size_t Height_)
@@ -102,7 +70,7 @@ namespace stbi {
 			{
 				*iter++ = *Src_++;
 			}
-			format_->writeToThisFormat_(Path_No_Suffix_, (int)Width_, (int)Height_, sizeof(Userdef_Pixel_T), (const void*)buffer);
+			FormatImpl::writeToThisFormat_(Path_No_Suffix_, (int)Width_, (int)Height_, sizeof(Userdef_Pixel_T), (const void*)buffer);
 			allocator.deallocate(buffer, n);
 		}
 
@@ -116,20 +84,20 @@ namespace stbi {
 			{
 				buffer[i] = *Src_++;
 			}
-			format_->writeToThisFormat_(Path_No_Suffix_, (int)Width_, (int)Height_, sizeof(Userdef_Pixel_T), (const void*)buffer);
+			FormatImpl::writeToThisFormat_(Path_No_Suffix_, (int)Width_, (int)Height_, sizeof(Userdef_Pixel_T), (const void*)buffer);
 			allocator.deallocate(buffer, n);
 		}
 
 		template<Pixel_type Userdef_Pixel_T>
 		void writeInto(std::string Path_No_Suffix_, Userdef_Pixel_T* Src_, size_t Width_, size_t Height_)
 		{
-			format_->writeToThisFormat_(Path_No_Suffix_, (int)Width_, (int)Height_, sizeof(Userdef_Pixel_T), (const void*)Src_);
+			FormatImpl::writeToThisFormat_(Path_No_Suffix_, (int)Width_, (int)Height_, sizeof(Userdef_Pixel_T), (const void*)Src_);
 		}
 
 		template<Pixel_type Userdef_Pixel_T>
 		void writeInto(std::string Path_No_Suffix_, const Userdef_Pixel_T* Src_, size_t Width_, size_t Height_)
 		{
-			format_->writeToThisFormat_(Path_No_Suffix_, (int)Width_, (int)Height_, sizeof(Userdef_Pixel_T), (const void*)Src_);
+			FormatImpl::writeToThisFormat_(Path_No_Suffix_, (int)Width_, (int)Height_, sizeof(Userdef_Pixel_T), (const void*)Src_);
 		}
 
 
@@ -152,7 +120,7 @@ namespace stbi {
 			Userdef_Pixel_T* rsz_buffer = allocator.allocate(Resizer_.toWidth() * Resizer_.toHeight());
 			Resizer_.resize_((const void*)buffer, Width_, Height_, sizeof(Userdef_Pixel_T), rsz_buffer);
 
-			format_->writeToThisFormat_(Path_No_Suffix_, (int)Resizer_.toWidth(), (int)Resizer_.toHeight(), sizeof(Userdef_Pixel_T), (const void*)rsz_buffer);
+			FormatImpl::writeToThisFormat_(Path_No_Suffix_, (int)Resizer_.toWidth(), (int)Resizer_.toHeight(), sizeof(Userdef_Pixel_T), (const void*)rsz_buffer);
 			allocator.deallocate(rsz_buffer, Resizer_.toWidth() * Resizer_.toHeight());
 			allocator.deallocate(buffer, n);
 		}
@@ -171,7 +139,7 @@ namespace stbi {
 			Userdef_Pixel_T* rsz_buffer = allocator.allocate(Resizer_.toWidth() * Resizer_.toHeight());
 			Resizer_.resize_((const void*)buffer, Width_, Height_, sizeof(Userdef_Pixel_T), rsz_buffer);
 
-			format_->writeToThisFormat_(Path_No_Suffix_, (int)Resizer_.toWidth(), (int)Resizer_.toHeight(), sizeof(Userdef_Pixel_T), (const void*)rsz_buffer);
+			FormatImpl::writeToThisFormat_(Path_No_Suffix_, (int)Resizer_.toWidth(), (int)Resizer_.toHeight(), sizeof(Userdef_Pixel_T), (const void*)rsz_buffer);
 			allocator.deallocate(rsz_buffer, Resizer_.toWidth() * Resizer_.toHeight());
 			allocator.deallocate(buffer, n);
 		}
@@ -183,7 +151,7 @@ namespace stbi {
 			Userdef_Pixel_T* rsz_buffer = allocator.allocate(Resizer_.toWidth() * Resizer_.toHeight());
 			Resizer_.resize_((const void*)Src_, Width_, Height_, sizeof(Userdef_Pixel_T), rsz_buffer);
 
-			format_->writeToThisFormat_(Path_No_Suffix_, (int)Resizer_.toWidth(), (int)Resizer_.toHeight(), sizeof(Userdef_Pixel_T), (const void*)rsz_buffer);
+			FormatImpl::writeToThisFormat_(Path_No_Suffix_, (int)Resizer_.toWidth(), (int)Resizer_.toHeight(), sizeof(Userdef_Pixel_T), (const void*)rsz_buffer);
 			allocator.deallocate(rsz_buffer, Resizer_.toWidth() * Resizer_.toHeight());
 		}
 
@@ -194,7 +162,7 @@ namespace stbi {
 			Userdef_Pixel_T* rsz_buffer = allocator.allocate(Resizer_.toWidth() * Resizer_.toHeight());
 			Resizer_.resize_((const void*)Src_, Width_, Height_, sizeof(Userdef_Pixel_T), rsz_buffer);
 
-			format_->writeToThisFormat_(Path_No_Suffix_, (int)Resizer_.toWidth(), (int)Resizer_.toHeight(), sizeof(Userdef_Pixel_T), (const void*)rsz_buffer);
+			FormatImpl::writeToThisFormat_(Path_No_Suffix_, (int)Resizer_.toWidth(), (int)Resizer_.toHeight(), sizeof(Userdef_Pixel_T), (const void*)rsz_buffer);
 			allocator.deallocate(rsz_buffer, Resizer_.toWidth() * Resizer_.toHeight());
 		}
 

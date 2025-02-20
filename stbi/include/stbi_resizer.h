@@ -17,7 +17,7 @@
 #include <cstdint>
 
 namespace stbi { class ImageLoader; }
-namespace stbi { class ImageWriter; }
+namespace stbi { template<class FormatImpl> class ImageWriter; }
 
 
 
@@ -59,7 +59,7 @@ namespace stbi {
 		constexpr size_t toWidth() const { return (size_t)to_wid_; }
 
 		friend class ImageLoader;
-		friend class ImageWriter;
+		template<class FormatImpl> friend class ImageWriter;
 	};
 
 
